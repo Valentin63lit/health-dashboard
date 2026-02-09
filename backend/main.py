@@ -178,6 +178,7 @@ def cmd_run():
     app.add_handler(CommandHandler("week", tg.cmd_week))
     app.add_handler(CommandHandler("goals", tg.cmd_goals))
     app.add_handler(CommandHandler("summary", tg.cmd_summary))
+    app.add_handler(CommandHandler("sync", tg.cmd_sync))
     app.add_handler(MessageHandler(filters.Document.ALL, tg.handle_document))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, tg.handle_text))
 

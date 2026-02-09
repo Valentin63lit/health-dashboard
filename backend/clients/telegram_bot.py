@@ -93,6 +93,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/today — Full stats for today\n"
         "/week — This week's summary\n"
         "/goals — Current macro targets\n"
+        "/sync — Pull latest Oura data\n"
         "/summary — AI health summary\n"
         "/help — All commands",
         parse_mode="Markdown",
@@ -112,6 +113,7 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/today — Full stats for today\n"
         "/week — This week's summary so far\n"
         "/goals — Current macro/calorie targets\n"
+        "/sync — Pull latest Oura data now\n"
         "/summary — AI-powered health summary\n"
         "/help — This help message\n\n"
         "📤 *File Upload:* Send a MacroFactor `.xlsx` export\n"
@@ -267,6 +269,38 @@ async def cmd_goals(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         log.error("command", f"/goals error: {e}")
         await update.message.reply_text("❌ Error fetching goals. Try again later.")
+
+
+async def cmd_sync(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /sync — manually trigger Oura data sync."""
+    if not await _check_auth(update):
+        return
+
+    log.info("command", "/sync")
+    try:
+        await update.message.reply_text("⏳ Syncing Oura data...")
+
+        from backend.clients.oura_client import OuraClient
+        from backend.services.sync_service import SyncService
+
+        sheets = _get_sheets()
+        oura = OuraClient()
+        sync_svc = SyncService(sheets, oura)
+
+        result = sync_svc.sync_oura(lookback_days=7)
+
+        if result["errors"]:
+            error_msg = "; ".join(result["errors"])
+            await update.message.reply_text(f"❌ Sync failed: {error_msg}")
+        else:
+            await update.message.reply_text(
+                f"✅ Synced {result['days_fetched']} days of Oura data "
+                f"({result['start_date']} to {result['end_date']})"
+            )
+
+    except Exception as e:
+        log.error("command", f"/sync error: {e}")
+        await update.message.reply_text(f"❌ Sync failed: {type(e).__name__}")
 
 
 async def cmd_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -635,6 +669,7 @@ def create_application() -> Application:
     app.add_handler(CommandHandler("week", cmd_week))
     app.add_handler(CommandHandler("goals", cmd_goals))
     app.add_handler(CommandHandler("summary", cmd_summary))
+    app.add_handler(CommandHandler("sync", cmd_sync))
 
     # File upload handler
     app.add_handler(MessageHandler(filters.Document.ALL, handle_document))
