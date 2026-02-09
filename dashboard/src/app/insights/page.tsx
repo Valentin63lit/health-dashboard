@@ -55,7 +55,6 @@ export default function InsightsPage() {
             weekEnd.setDate(weekEnd.getDate() + 6);
             const weekLabel = `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}–${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
 
-            // Get first meaningful line for preview
             const preview = s.Summary_Text.split('\n').find((l) => l.trim().length > 10)?.trim().slice(0, 100) || '';
 
             return (
@@ -100,7 +99,6 @@ export default function InsightsPage() {
 function formatSummaryText(text: string): React.ReactNode {
   const lines = text.split('\n');
   return lines.map((line, i) => {
-    // Bold: **text**
     const parts = line.split(/(\*\*[^*]+\*\*)/g);
     const formatted = parts.map((part, j) => {
       if (part.startsWith('**') && part.endsWith('**')) {
@@ -113,7 +111,6 @@ function formatSummaryText(text: string): React.ReactNode {
       return part;
     });
 
-    // Section headers (lines starting with numbers, bullets, or all-caps-ish)
     if (/^\d+\./.test(line) || /^[A-Z][A-Z\s&]+:/.test(line) || /^#+\s/.test(line)) {
       const cleanLine = line.replace(/^#+\s/, '');
       const cleanParts = cleanLine.split(/(\*\*[^*]+\*\*)/g).map((part, j) => {

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, LineChart, TrendingUp, Sparkles, Send } from 'lucide-react';
+import { BarChart3, LineChart, TrendingUp, Table2, Send } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface NavItem {
@@ -16,7 +16,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Today', icon: BarChart3 },
   { href: '/weekly', label: 'Weekly', icon: LineChart },
   { href: '/trends', label: 'Trends', icon: TrendingUp },
-  { href: '/insights', label: 'AI', icon: Sparkles },
+  { href: '/log', label: 'Log', icon: Table2 },
   { href: 'https://t.me/alex_health_tracker_bot', label: 'Telegram', icon: Send, external: true },
 ];
 
