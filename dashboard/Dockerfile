@@ -20,6 +20,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Ensure public dir exists (git may not track empty dirs)
+RUN mkdir -p /app/public
+
 # Next.js collects telemetry — disable it
 ENV NEXT_TELEMETRY_DISABLED=1
 
