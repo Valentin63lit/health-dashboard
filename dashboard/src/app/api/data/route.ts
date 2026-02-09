@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDailyLogs, getWeeklySummaries } from '@/lib/sheets';
+import { getDailyLogs, getWeeklySummaries, getGoals } from '@/lib/sheets';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 60;
@@ -10,9 +10,10 @@ export async function GET(request: NextRequest) {
     const start = searchParams.get('start') || '2020-01-01';
     const end = searchParams.get('end') || '2099-12-31';
 
-    const [dailyLogs, weeklySummaries] = await Promise.all([
+    const [dailyLogs, weeklySummaries, goals] = await Promise.all([
       getDailyLogs(),
       getWeeklySummaries(),
+      getGoals(),
     ]);
 
     // Filter by date range
@@ -26,11 +27,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       dailyLogs: filteredLogs,
       weeklySummaries: filteredSummaries,
+      goals,
     });
   } catch (error) {
     console.error('API /data error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch data', dailyLogs: [], weeklySummaries: [] },
+      { error: 'Failed to fetch data', dailyLogs: [], weeklySummaries: [], goals: [] },
       { status: 500 }
     );
   }

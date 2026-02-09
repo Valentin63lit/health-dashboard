@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { DailyLog, WeeklySummary, scoreColorClass } from '@/lib/types';
-import { WeekSelector } from '@/components/WeekSelector';
-import { ScoreCard } from '@/components/ScoreCard';
-import { ComplianceBadge } from '@/components/ComplianceBadge';
-import { WeightChart, ScoreChart, MetricBarChart } from '@/components/Charts';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { DailyLog, WeeklySummary, fmtNum, avg } from '@/lib/types';
+import { ScoreRing } from '@/components/ScoreRing';
+import { PageHeader } from '@/components/PageHeader';
+import { SkeletonPage } from '@/components/SkeletonCard';
+import { WeightChart, SleepStackedChart, CaloriesChart, StepsChart } from '@/components/Charts';
 
 interface WeekData {
   dailyLogs: DailyLog[];
@@ -44,6 +45,7 @@ export default function WeeklyPage() {
 
   const mondayStr = formatDate(currentMonday);
   const sundayStr = formatDate(currentSunday);
+
   const rangeLabel = `${currentMonday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — ${currentSunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
 
   useEffect(() => {
@@ -63,102 +65,152 @@ export default function WeeklyPage() {
     (s) => s.Week_Start === mondayStr
   );
 
+  // Compliance percentage
+  const nutritionDays = weekSummary?.Days_Logged_Nutrition ?? weekLogs.filter((d) => d.Nutrition_Logged === 'TRUE').length;
+  const compliancePct = Math.round((nutritionDays / 7) * 100);
+
   // Chart data
-  const chartData = weekLogs.map((d) => ({
-    label: new Date(d.Date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' }),
+  const dayLabel = (d: DailyLog) =>
+    new Date(d.Date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' });
+
+  const weightData = weekLogs.map((d) => ({
+    label: dayLabel(d),
     weight: d.Weight_kg,
     trend: d.Trend_Weight_kg,
-    sleepScore: d.Sleep_Score,
-    readinessScore: d.Readiness_Score,
-    steps: d.Steps,
+  }));
+
+  const sleepData = weekLogs.map((d) => {
+    const totalMin = (d.Total_Sleep_Hours ?? 0) * 60;
+    const deep = d.Deep_Sleep_Minutes ?? 0;
+    const rem = d.REM_Sleep_Minutes ?? 0;
+    const light = Math.max(0, totalMin - deep - rem);
+    return { label: dayLabel(d), deep, rem, light };
+  });
+
+  const caloriesData = weekLogs.map((d) => ({
+    label: dayLabel(d),
     calories: d.Calories,
+    expenditure: d.Expenditure,
+  }));
+
+  const stepsData = weekLogs.map((d) => ({
+    label: dayLabel(d),
+    steps: d.Steps,
   }));
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-brand-white">Weekly</h1>
+      <PageHeader title="Weekly" />
 
-      <WeekSelector
-        currentRange={rangeLabel}
-        onPrev={() => setWeekOffset((o) => o - 1)}
-        onNext={() => setWeekOffset((o) => o + 1)}
-        canGoNext={canGoNext}
-      />
+      {/* Week Selector */}
+      <div className="flex items-center justify-between bg-brand-dark border border-brand-border rounded-xl px-2 py-2">
+        <button
+          onClick={() => setWeekOffset((o) => o - 1)}
+          className="p-2 text-brand-muted hover:text-brand-text transition-colors"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        <span className="text-sm font-medium text-brand-text">{rangeLabel}</span>
+        <button
+          onClick={() => canGoNext && setWeekOffset((o) => o + 1)}
+          className={`p-2 transition-colors ${canGoNext ? 'text-brand-muted hover:text-brand-text' : 'text-brand-border'}`}
+          disabled={!canGoNext}
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
 
       {loading ? (
-        <div className="bg-brand-dark rounded-xl p-8 text-center">
-          <p className="text-brand-muted text-sm animate-pulse">Loading...</p>
-        </div>
+        <SkeletonPage />
       ) : weekLogs.length === 0 ? (
-        <div className="bg-brand-dark rounded-xl p-8 text-center">
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
           <p className="text-brand-muted text-sm">No data for this week</p>
         </div>
       ) : (
-        <>
-          {/* Average Scores */}
-          <div className="grid grid-cols-3 gap-3">
-            <ScoreCard label="Sleep" value={weekSummary?.Avg_Sleep_Score ?? avg(weekLogs, 'Sleep_Score')} icon="😴" />
-            <ScoreCard label="Readiness" value={weekSummary?.Avg_Readiness_Score ?? avg(weekLogs, 'Readiness_Score')} icon="⚡" />
-            <ScoreCard label="Activity" value={weekSummary?.Avg_Activity_Score ?? avg(weekLogs, 'Activity_Score')} icon="🏃" />
+        <div className="space-y-4 animate-fade-in">
+          {/* Summary Row */}
+          <div className="flex justify-center gap-6 py-2">
+            <ScoreRing
+              score={weekSummary?.Avg_Sleep_Score ?? avg(weekLogs, 'Sleep_Score')}
+              label="Avg Sleep"
+            />
+            <ScoreRing
+              score={weekSummary?.Avg_Readiness_Score ?? avg(weekLogs, 'Readiness_Score')}
+              label="Avg Readiness"
+            />
+            {/* Compliance ring */}
+            <div className="flex flex-col items-center gap-1.5">
+              <div className="relative" style={{ width: 64, height: 64 }}>
+                <svg width={64} height={64} viewBox="0 0 64 64" className="-rotate-90">
+                  <circle cx={32} cy={32} r={29.5} fill="none" stroke="#1A3A3A" strokeWidth={5} />
+                  <circle
+                    cx={32} cy={32} r={29.5}
+                    fill="none"
+                    stroke={compliancePct >= 80 ? '#10B981' : compliancePct >= 50 ? '#F59E0B' : '#EF4444'}
+                    strokeWidth={5}
+                    strokeDasharray={`${(compliancePct / 100) * 2 * Math.PI * 29.5} ${2 * Math.PI * 29.5}`}
+                    strokeLinecap="round"
+                    className="transition-all duration-700 ease-out"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="tnum font-bold text-brand-text" style={{ fontSize: 16 }}>
+                    {compliancePct}%
+                  </span>
+                </div>
+              </div>
+              <span className="text-xs text-brand-muted">Compliance</span>
+            </div>
           </div>
-
-          {/* Compliance */}
-          <ComplianceBadge
-            nutritionDays={weekSummary?.Days_Logged_Nutrition ?? weekLogs.filter((d) => d.Nutrition_Logged === 'TRUE').length}
-            totalDays={7}
-          />
 
           {/* Weight Change */}
           {weekSummary?.Weight_Change_kg !== null && weekSummary?.Weight_Change_kg !== undefined && (
-            <div className="bg-brand-dark rounded-xl p-4 flex items-center justify-between">
+            <div className="bg-brand-dark border border-brand-border rounded-xl p-4 flex items-center justify-between">
               <span className="text-sm text-brand-muted">Week weight change</span>
-              <span className={`text-lg font-bold ${Number(weekSummary.Weight_Change_kg) > 0 ? 'text-score-red' : 'text-score-green'}`}>
-                {Number(weekSummary.Weight_Change_kg) > 0 ? '+' : ''}{weekSummary.Weight_Change_kg}kg
+              <span
+                className="text-lg font-bold tnum"
+                style={{
+                  color: Number(weekSummary.Weight_Change_kg) > 0 ? '#EF4444' : '#10B981',
+                }}
+              >
+                {Number(weekSummary.Weight_Change_kg) > 0 ? '+' : ''}{Number(weekSummary.Weight_Change_kg).toFixed(1)}kg
               </span>
             </div>
           )}
 
           {/* Charts */}
-          <WeightChart data={chartData} />
-          <ScoreChart data={chartData} dataKey="sleepScore" title="Sleep Score" color="#08DEDE" />
-          <ScoreChart data={chartData} dataKey="readinessScore" title="Readiness Score" color="#22C55E" />
-          <MetricBarChart data={chartData} dataKey="steps" title="Daily Steps" color="#106A6A" />
-          <MetricBarChart data={chartData} dataKey="calories" title="Calories" color="#08DEDE" />
+          <WeightChart data={weightData} />
+          <SleepStackedChart data={sleepData} />
+          <CaloriesChart data={caloriesData} />
+          <StepsChart data={stepsData} />
 
-          {/* Key Stats */}
-          <div className="bg-brand-dark rounded-xl p-4">
-            <h3 className="text-xs text-brand-muted uppercase tracking-wider mb-2 font-medium">Week Averages</h3>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-              <StatItem label="Avg Sleep" value={weekSummary?.Avg_Sleep_Hours ?? avg(weekLogs, 'Total_Sleep_Hours', 1)} unit="h" />
-              <StatItem label="Avg Steps" value={weekSummary?.Avg_Steps ?? avg(weekLogs, 'Steps')} unit="" />
-              <StatItem label="Avg Calories" value={weekSummary?.Avg_Calories ?? avg(weekLogs, 'Calories')} unit="" />
-              <StatItem label="Avg Protein" value={weekSummary?.Avg_Protein_g ?? avg(weekLogs, 'Protein_g')} unit="g" />
-              <StatItem label="Avg RHR" value={weekSummary?.Avg_Resting_HR ?? avg(weekLogs, 'Resting_Heart_Rate')} unit="bpm" />
-              <StatItem label="Avg Nap" value={weekSummary?.Avg_Nap_Minutes ?? avg(weekLogs, 'Nap_Minutes')} unit="min" />
+          {/* Week Averages */}
+          <div className="bg-brand-dark border border-brand-border rounded-xl p-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-muted mb-3">
+              Week Averages
+            </h3>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              <AvgItem label="Avg Sleep" value={weekSummary?.Avg_Sleep_Hours ?? avg(weekLogs, 'Total_Sleep_Hours', 1)} unit="h" />
+              <AvgItem label="Avg Steps" value={weekSummary?.Avg_Steps ?? avg(weekLogs, 'Steps')} unit="" />
+              <AvgItem label="Avg Calories" value={weekSummary?.Avg_Calories ?? avg(weekLogs, 'Calories')} unit="" />
+              <AvgItem label="Avg Protein" value={weekSummary?.Avg_Protein_g ?? avg(weekLogs, 'Protein_g')} unit="g" />
+              <AvgItem label="Avg RHR" value={weekSummary?.Avg_Resting_HR ?? avg(weekLogs, 'Resting_Heart_Rate')} unit="bpm" />
+              <AvgItem label="Avg Nap" value={weekSummary?.Avg_Nap_Minutes ?? avg(weekLogs, 'Nap_Minutes')} unit="min" />
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
 }
 
-function StatItem({ label, value, unit }: { label: string; value: number | null; unit: string }) {
+function AvgItem({ label, value, unit }: { label: string; value: number | null; unit: string }) {
   return (
     <div className="flex justify-between py-1">
       <span className="text-brand-muted">{label}</span>
-      <span className="text-brand-text font-medium">
-        {value !== null ? `${typeof value === 'number' ? value.toLocaleString() : value}${unit ? ' ' + unit : ''}` : '—'}
+      <span className="text-brand-text font-medium tnum">
+        {value !== null ? `${fmtNum(value)}${unit ? ' ' + unit : ''}` : '—'}
       </span>
     </div>
   );
-}
-
-function avg(logs: DailyLog[], field: keyof DailyLog, decimals: number = 0): number | null {
-  const vals = logs
-    .map((d) => d[field] as number | null)
-    .filter((v): v is number => v !== null && v !== 0);
-  if (vals.length === 0) return null;
-  const result = vals.reduce((a, b) => a + b, 0) / vals.length;
-  return Number(result.toFixed(decimals));
 }

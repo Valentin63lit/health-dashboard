@@ -1,31 +1,29 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { DailyLog, WeeklySummary } from '@/lib/types';
-import { TrendsChart, WeightChart } from '@/components/Charts';
+import { DailyLog, WeeklySummary, fmtNum } from '@/lib/types';
+import { PageHeader } from '@/components/PageHeader';
+import { SkeletonPage } from '@/components/SkeletonCard';
+import { WeightTrendArea, TrendsChart, AreaOverlayChart } from '@/components/Charts';
 
-type RangeOption = '1w' | '4w' | '3m' | 'all';
+type RangeOption = '1W' | '4W' | '3M' | 'All';
 
-const RANGE_LABELS: Record<RangeOption, string> = {
-  '1w': '1 Week',
-  '4w': '4 Weeks',
-  '3m': '3 Months',
-  all: 'All Time',
+const RANGE_DAYS: Record<RangeOption, number> = {
+  '1W': 7,
+  '4W': 28,
+  '3M': 90,
+  'All': 9999,
 };
 
 function getStartDate(range: RangeOption): string {
+  if (range === 'All') return '2020-01-01';
   const d = new Date();
-  switch (range) {
-    case '1w': d.setDate(d.getDate() - 7); break;
-    case '4w': d.setDate(d.getDate() - 28); break;
-    case '3m': d.setMonth(d.getMonth() - 3); break;
-    case 'all': return '2020-01-01';
-  }
+  d.setDate(d.getDate() - RANGE_DAYS[range]);
   return d.toISOString().split('T')[0];
 }
 
 export default function TrendsPage() {
-  const [range, setRange] = useState<RangeOption>('4w');
+  const [range, setRange] = useState<RangeOption>('4W');
   const [data, setData] = useState<{ dailyLogs: DailyLog[]; weeklySummaries: WeeklySummary[] } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -49,11 +47,9 @@ export default function TrendsPage() {
     (a, b) => a.Week_Start.localeCompare(b.Week_Start)
   ) || [];
 
-  // Format label based on range
   const formatLabel = (date: string) => {
     const d = new Date(date + 'T12:00:00');
-    if (range === '1w') return d.toLocaleDateString('en-US', { weekday: 'short' });
-    if (range === '4w') return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    if (range === '1W') return d.toLocaleDateString('en-US', { weekday: 'short' });
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
@@ -84,51 +80,50 @@ export default function TrendsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-brand-white">Trends</h1>
+      <PageHeader title="Trends" />
 
-      {/* Range Selector */}
-      <div className="flex gap-2">
-        {(Object.keys(RANGE_LABELS) as RangeOption[]).map((r) => (
+      {/* Range Pills */}
+      <div className="flex gap-1 bg-brand-dark border border-brand-border rounded-xl p-1">
+        {(['1W', '4W', '3M', 'All'] as RangeOption[]).map((r) => (
           <button
             key={r}
             onClick={() => setRange(r)}
-            className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${
+            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
               range === r
                 ? 'bg-brand-accent text-brand-darkest'
-                : 'bg-brand-dark text-brand-muted hover:text-brand-text'
+                : 'text-brand-muted hover:text-brand-text'
             }`}
           >
-            {RANGE_LABELS[r]}
+            {r}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <div className="bg-brand-dark rounded-xl p-8 text-center">
-          <p className="text-brand-muted text-sm animate-pulse">Loading trends...</p>
-        </div>
+        <SkeletonPage />
       ) : logs.length === 0 ? (
-        <div className="bg-brand-dark rounded-xl p-8 text-center">
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
           <p className="text-brand-muted text-sm">No data for this period</p>
         </div>
       ) : (
-        <>
-          {/* Weight + Trend */}
-          <WeightChart data={weightData} />
+        <div className="space-y-4 animate-fade-in">
+          <WeightTrendArea
+            data={weightData}
+            info="Trend weight smooths daily fluctuations. Focus on the overall direction."
+          />
 
-          {/* Scores */}
           <TrendsChart
             data={scoreData}
             lines={[
               { key: 'sleep', color: '#08DEDE', name: 'Sleep' },
-              { key: 'readiness', color: '#22C55E', name: 'Readiness' },
-              { key: 'activity', color: '#EAB308', name: 'Activity' },
+              { key: 'readiness', color: '#10B981', name: 'Readiness' },
+              { key: 'activity', color: '#F59E0B', name: 'Activity' },
             ]}
             title="Health Scores"
+            info="Scores above 80 are excellent. Track consistency rather than individual days."
             yDomain={[0, 100]}
           />
 
-          {/* HRV + Resting HR */}
           <TrendsChart
             data={hrvData}
             lines={[
@@ -136,25 +131,24 @@ export default function TrendsPage() {
               { key: 'rhr', color: '#EF4444', name: 'Resting HR' },
             ]}
             title="HRV & Resting Heart Rate"
+            info="HRV trending UP = improving recovery. RHR trending DOWN = improving fitness."
           />
 
-          {/* Calories vs Expenditure */}
-          <TrendsChart
+          <AreaOverlayChart
             data={caloriesData}
-            lines={[
-              { key: 'calories', color: '#08DEDE', name: 'Calories In' },
-              { key: 'expenditure', color: '#9EB6B6', name: 'TDEE' },
-            ]}
             title="Calories vs TDEE"
+            info="When calories > TDEE you're in surplus (gaining). When below, you're in deficit (losing)."
           />
 
-          {/* Week-over-Week Comparison Table */}
+          {/* Week-over-Week Table */}
           {weeklySummaries.length > 1 && (
-            <div className="bg-brand-dark rounded-xl p-4 overflow-x-auto">
-              <h3 className="text-xs text-brand-muted uppercase tracking-wider mb-3 font-medium">Week-over-Week</h3>
+            <div className="bg-brand-dark border border-brand-border rounded-xl p-4 overflow-x-auto">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-muted mb-3">
+                Week-over-Week
+              </h3>
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="text-brand-muted border-b border-brand-primary/20">
+                  <tr className="text-brand-muted border-b border-brand-border">
                     <th className="text-left py-2 pr-2">Week</th>
                     <th className="text-right py-2 px-1">Weight</th>
                     <th className="text-right py-2 px-1">Sleep</th>
@@ -165,23 +159,25 @@ export default function TrendsPage() {
                 </thead>
                 <tbody>
                   {weeklySummaries.slice(-8).reverse().map((w) => (
-                    <tr key={w.Week_Start} className="border-b border-brand-primary/10">
-                      <td className="py-1.5 pr-2 text-brand-muted">
+                    <tr key={w.Week_Start} className="border-b border-brand-border/50">
+                      <td className="py-2 pr-2 text-brand-muted">
                         {new Date(w.Week_Start + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </td>
-                      <td className="text-right py-1.5 px-1 text-brand-text">
-                        {w.Avg_Weight_kg ?? '—'}
+                      <td className="text-right py-2 px-1 text-brand-text tnum">
+                        {w.Avg_Weight_kg !== null ? w.Avg_Weight_kg.toFixed(1) : '—'}
                       </td>
-                      <td className="text-right py-1.5 px-1 text-brand-text">
+                      <td className="text-right py-2 px-1 text-brand-text tnum">
                         {w.Avg_Sleep_Score ?? '—'}
                       </td>
-                      <td className="text-right py-1.5 px-1 text-brand-text">
-                        {w.Avg_Steps !== null ? Math.round(w.Avg_Steps).toLocaleString() : '—'}
+                      <td className="text-right py-2 px-1 text-brand-text tnum">
+                        {w.Avg_Steps !== null ? fmtNum(Math.round(w.Avg_Steps)) : '—'}
                       </td>
-                      <td className="text-right py-1.5 px-1 text-brand-text">
-                        {w.Avg_Calories ?? '—'}
+                      <td className="text-right py-2 px-1 text-brand-text tnum">
+                        {w.Avg_Calories !== null ? fmtNum(Math.round(w.Avg_Calories)) : '—'}
                       </td>
-                      <td className="text-right py-1.5 pl-1 text-brand-text">
+                      <td className="text-right py-2 pl-1 tnum font-medium" style={{
+                        color: w.Compliance_Pct >= 80 ? '#10B981' : w.Compliance_Pct >= 50 ? '#F59E0B' : '#EF4444',
+                      }}>
                         {w.Compliance_Pct}%
                       </td>
                     </tr>
@@ -190,7 +186,7 @@ export default function TrendsPage() {
               </table>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

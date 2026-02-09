@@ -75,20 +75,43 @@ export function toNum(val: string | number | null | undefined): number | null {
   return isNaN(n) ? null : n;
 }
 
-/** Score color: green ≥80, yellow 60-79, red <60 */
-export function scoreColor(score: number | null): 'green' | 'yellow' | 'red' | 'muted' {
-  if (score === null) return 'muted';
-  if (score >= 80) return 'green';
-  if (score >= 60) return 'yellow';
-  return 'red';
+/** Format number with commas: 8432 → "8,432" */
+export function fmtNum(val: number | null, decimals: number = 0): string {
+  if (val === null) return '—';
+  return val.toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
 }
 
+/** Format percentage with one decimal */
+export function fmtPct(val: number | null): string {
+  if (val === null) return '—';
+  return `${val.toFixed(1)}%`;
+}
+
+/** Score color hex by value */
+export function scoreHex(score: number | null): string {
+  if (score === null) return '#8A9A9A';
+  if (score >= 80) return '#10B981';
+  if (score >= 60) return '#F59E0B';
+  return '#EF4444';
+}
+
+/** Score color tailwind class */
 export function scoreColorClass(score: number | null): string {
-  const color = scoreColor(score);
-  switch (color) {
-    case 'green': return 'text-score-green';
-    case 'yellow': return 'text-score-yellow';
-    case 'red': return 'text-score-red';
-    default: return 'text-brand-muted';
-  }
+  if (score === null) return 'text-brand-muted';
+  if (score >= 80) return 'text-score-green';
+  if (score >= 60) return 'text-score-yellow';
+  return 'text-score-red';
+}
+
+/** Average of non-null values in an array */
+export function avg(logs: DailyLog[], field: keyof DailyLog, decimals: number = 0): number | null {
+  const vals = logs
+    .map((d) => d[field] as number | null)
+    .filter((v): v is number => v !== null && v !== 0);
+  if (vals.length === 0) return null;
+  const result = vals.reduce((a, b) => a + b, 0) / vals.length;
+  return Number(result.toFixed(decimals));
 }
