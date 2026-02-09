@@ -1,0 +1,31 @@
+# Health Dashboard Backend Dependencies
+# Pinned versions for reproducibility
+
+# Telegram Bot
+python-telegram-bot==21.5
+
+# Google Sheets
+gspread==6.1.4
+google-auth==2.36.0
+
+# Oura Ring API
+requests==2.32.3
+
+# Claude AI
+anthropic==0.42.0
+
+# Scheduling
+APScheduler==3.10.4
+
+# MacroFactor Excel parsing
+openpyxl==3.1.5
+
+# Timezone handling
+pytz==2024.2
+
+# Environment variables
+python-dotenv==1.0.1
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.24.0

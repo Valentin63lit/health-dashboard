@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --color-bg-darkest: #061A19;
+  --color-bg-dark: #0D3B3B;
+  --color-primary: #106A6A;
+  --color-primary-dark: #184E4E;
+  --color-accent: #08DEDE;
+  --color-muted: #9EB6B6;
+  --color-text: #F5F7F6;
+  --color-white: #FFFFFF;
+}
+
+body {
+  background-color: var(--color-bg-darkest);
+  color: var(--color-text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg-darkest);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 3px;
+}
+
+/* Recharts tooltip override */
+.recharts-tooltip-wrapper {
+  outline: none !important;
+}
+.recharts-default-tooltip {
+  background-color: var(--color-bg-dark) !important;
+  border: 1px solid var(--color-primary) !important;
+  border-radius: 8px !important;
+  color: var(--color-text) !important;
+}

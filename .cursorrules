@@ -1,0 +1,111 @@
+# Cursor Development Rules — Health Dashboard
+
+## Project Context
+Read `PROJECT_SCOPE.md` before starting ANY work. That file is the source of truth for what this project does, how it's structured, and what the requirements are. If anything in these instructions conflicts with `PROJECT_SCOPE.md`, the scope document wins.
+
+## Critical Rules
+
+### 1. Always Update Documentation
+- After ANY code change, update `PROJECT_SCOPE.md` if the change affects features, schema, behavior, or architecture
+- After ANY code change, add an entry to `CHANGELOG.md` with date, description, and files affected
+- Never let documentation drift from actual behavior
+
+### 2. Logging Is Non-Negotiable
+- Every function that talks to an external service (Oura, Google Sheets, Telegram, Claude) MUST log:
+  - Start of operation
+  - Success with summary (how many records, what date range)
+  - Failure with full error details
+- Use the structured logger from `utils/logger.py`
+- Log format: `[TIMESTAMP] [SOURCE] [ACTION] MESSAGE`
+- All errors must also be sent as Telegram notifications to the user
+
+### 3. Upsert Logic Must Be Bulletproof
+- NEVER blindly overwrite a row. Always read existing data first.
+- If incoming value is None/null/empty → keep existing value
+- If incoming value is present → overwrite
+- Oura data ONLY touches columns J–T
+- Nutrition data ONLY touches columns B–I
+- Test upsert with: empty row, partial row, full row, conflicting data
+
+### 4. Error Handling
+- Every external API call must have try/except with:
+  - Specific exception handling (not bare `except:`)
+  - Retry logic (3 attempts with exponential backoff for Google Sheets and Oura)
+  - Telegram notification on final failure
+  - Graceful degradation (one failing service should not break others)
+- If Oura sync fails, nutrition import should still work (and vice versa)
+
+### 5. Timezone
+- ALL dates must be in Europe/Sofia timezone
+- Use `pytz` or `zoneinfo` consistently — pick one and use it everywhere
+- Store dates as `YYYY-MM-DD` strings in Google Sheets
+- Never use `datetime.now()` without timezone — always `datetime.now(tz)`
+
+### 6. MacroFactor Parser
+- Must detect file format by checking sheet names:
+  - Has "Quick Export" sheet → Format A
+  - Has "Calories & Macros" AND "Scale Weight" sheets → Format B
+  - Has "Program Settings" sheet → Format C (goals update)
+- Must handle: empty cells, None values, dates as datetime objects or strings
+- Must validate data ranges (weight 40-200kg, calories 0-10000, etc.)
+- Must return standardized dict regardless of input format
+
+### 7. Telegram Bot Security
+- ONLY respond to the configured TELEGRAM_USER_ID
+- All other users get: "⛔ Unauthorized. This is a private bot."
+- Never expose API keys, tokens, or internal errors in Telegram messages
+
+### 8. Google Sheets Operations
+- Use batch operations where possible (batch update > individual cell writes)
+- Always include error handling for quota limits (429 responses)
+- The Daily Log tab should be sorted by date (ascending)
+- Weekly Summary should auto-recalculate on every sync
+
+### 9. Testing
+- Write tests for:
+  - MacroFactor parser (all 3 formats + edge cases)
+  - Upsert logic (merge behavior)
+  - Alert rules (trigger conditions)
+  - Date/timezone utilities
+- Use pytest
+- Mock all external APIs in tests
+
+### 10. Dependencies
+- Pin all dependency versions in requirements.txt
+- Use these libraries:
+  - `python-telegram-bot` for Telegram
+  - `gspread` + `google-auth` for Google Sheets
+  - `requests` for Oura API
+  - `anthropic` for Claude API
+  - `APScheduler` for cron scheduling
+  - `openpyxl` for parsing MacroFactor xlsx files
+  - `pytz` for timezone handling
+
+### 11. Docker & Railway
+- Backend Dockerfile must:
+  - Use Python 3.11+ slim image
+  - Install only production dependencies
+  - Run both the Telegram bot AND the scheduler in the same process
+- Dashboard Dockerfile must:
+  - Use Node 20 alpine
+  - Build Next.js for production
+  - Serve on port from $PORT env var
+
+### 12. File Structure
+Follow the structure in `PROJECT_SCOPE.md` Section 10 exactly. Do not reorganize unless there's a documented reason (and update the scope doc).
+
+## Development Workflow
+1. Read `PROJECT_SCOPE.md` fully
+2. Follow the Phase order in Section 11 of the scope
+3. After each phase, verify everything works end-to-end
+4. Update `PROJECT_SCOPE.md` and `CHANGELOG.md` after every session
+5. Commit with descriptive messages: `feat: add oura client with 7-day backfill` not `update files`
+
+## Common Pitfalls to Avoid
+- Don't use `datetime.utcnow()` — it's timezone-naive
+- Don't assume MacroFactor always has data — cells can be None
+- Don't write to Google Sheets one cell at a time — use batch updates
+- Don't hardcode any API keys — everything from env vars
+- Don't forget to share the Google Sheet with the service account email
+- Don't run multiple instances of the Telegram bot (webhook conflicts)
+- Don't store execution logs only in stdout — write to file AND stdout

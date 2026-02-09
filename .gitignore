@@ -1,0 +1,46 @@
+# Environment & Secrets
+.env
+.env.local
+service-account.json
+*.json.bak
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+venv/
+.venv/
+.alerts_cache.json
+
+# Node
+node_modules/
+.next/
+out/
+
+# Logs
+*.log
+execution.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+
+# Setup artifacts (not part of the app)
+dot-*.txt
+CURSOR_PROMPT.md
+SETUP_GUIDE.md
+
+# Root-level duplicates (originals are in assets/)
+/brand-colors.png
+/logo.png
+
+# Next.js build cache
+dashboard/.next/
+dashboard/node_modules/
