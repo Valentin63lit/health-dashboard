@@ -121,9 +121,9 @@ export function SleepStackedChart({ data }: { data: ChartData[] }) {
           <XAxis dataKey="label" tick={{ fill: C.muted, fontSize: 10 }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fill: C.muted, fontSize: 10 }} width={30} axisLine={false} tickLine={false} />
           <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: C.text }} />
-          <Bar dataKey="deep" stackId="sleep" fill="#0A7E7E" radius={[0, 0, 0, 0]} name="Deep" />
+          <Bar dataKey="deep" stackId="sleep" fill="#0CB4B4" radius={[0, 0, 0, 0]} name="Deep" />
           <Bar dataKey="rem" stackId="sleep" fill={C.accent} name="REM" />
-          <Bar dataKey="light" stackId="sleep" fill="#1A4A4A" radius={[4, 4, 0, 0]} name="Light" />
+          <Bar dataKey="light" stackId="sleep" fill="#5A9A9A" radius={[4, 4, 0, 0]} name="Light" />
         </BarChart>
       </ResponsiveContainer>
     </ChartCard>

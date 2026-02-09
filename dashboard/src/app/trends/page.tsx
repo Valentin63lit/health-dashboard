@@ -182,25 +182,25 @@ export default function TrendsPage() {
               <AreaChart data={sleepData}>
                 <defs>
                   <linearGradient id="deepFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#064E4E" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="#064E4E" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#0CB4B4" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="#0CB4B4" stopOpacity={0.05} />
                   </linearGradient>
                   <linearGradient id="remFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#08DEDE" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="#08DEDE" stopOpacity={0} />
+                    <stop offset="100%" stopColor="#08DEDE" stopOpacity={0.05} />
                   </linearGradient>
                   <linearGradient id="lightFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#1A3A3A" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="#1A3A3A" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#5A9A9A" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#5A9A9A" stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="label" tick={{ fill: '#8A9A9A', fontSize: 10 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: '#8A9A9A', fontSize: 10 }} width={25} axisLine={false} tickLine={false} unit="h" />
                 <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: '#F5F7F6' }} formatter={(v: number) => `${v}h`} />
                 <Legend wrapperStyle={{ fontSize: 11, color: '#8A9A9A' }} iconType="circle" iconSize={8} />
-                <Area type="monotone" dataKey="deep" stackId="sleep" stroke="#064E4E" fill="url(#deepFill)" strokeWidth={1.5} name="Deep" connectNulls />
+                <Area type="monotone" dataKey="deep" stackId="sleep" stroke="#0CB4B4" fill="url(#deepFill)" strokeWidth={1.5} name="Deep" connectNulls />
                 <Area type="monotone" dataKey="rem" stackId="sleep" stroke="#08DEDE" fill="url(#remFill)" strokeWidth={1.5} name="REM" connectNulls />
-                <Area type="monotone" dataKey="light" stackId="sleep" stroke="#1A3A3A" fill="url(#lightFill)" strokeWidth={1.5} name="Light" connectNulls />
+                <Area type="monotone" dataKey="light" stackId="sleep" stroke="#5A9A9A" fill="url(#lightFill)" strokeWidth={1.5} name="Light" connectNulls />
               </AreaChart>
             </ResponsiveContainer>
           </ChartCard>

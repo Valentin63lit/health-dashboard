@@ -272,9 +272,9 @@ function SleepBreakdownChart({ data }: { data: Array<{ label: string; deep: numb
           <YAxis tick={{ fill: '#8A9A9A', fontSize: 10 }} width={25} axisLine={false} tickLine={false} unit="h" />
           <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: '#F5F7F6' }} formatter={(v: number) => `${v}h`} />
           <Legend wrapperStyle={{ fontSize: 11, color: '#8A9A9A' }} iconType="circle" iconSize={8} />
-          <Bar dataKey="deep" stackId="sleep" fill="#064E4E" name="Deep" />
+          <Bar dataKey="deep" stackId="sleep" fill="#0CB4B4" name="Deep" />
           <Bar dataKey="rem" stackId="sleep" fill="#08DEDE" name="REM" />
-          <Bar dataKey="light" stackId="sleep" fill="#1A3A3A" radius={[4, 4, 0, 0]} name="Light" />
+          <Bar dataKey="light" stackId="sleep" fill="#5A9A9A" radius={[4, 4, 0, 0]} name="Light" />
         </BarChart>
       </ResponsiveContainer>
     </div>

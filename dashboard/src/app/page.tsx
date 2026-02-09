@@ -177,8 +177,8 @@ export default function TodayPage() {
               <span className="text-sm font-normal text-brand-muted ml-1">hrs</span>
             </p>
             <p className="text-sm text-brand-muted mt-1 tnum">
-              Deep {d.Deep_Sleep_Minutes ?? '—'}min
-              {' · '}REM {d.REM_Sleep_Minutes ?? '—'}min
+              Deep {d.Deep_Sleep_Minutes !== null ? (d.Deep_Sleep_Minutes >= 60 ? `${(d.Deep_Sleep_Minutes / 60).toFixed(1)}h` : `${d.Deep_Sleep_Minutes}min`) : '—'}
+              {' · '}REM {d.REM_Sleep_Minutes !== null ? (d.REM_Sleep_Minutes >= 60 ? `${(d.REM_Sleep_Minutes / 60).toFixed(1)}h` : `${d.REM_Sleep_Minutes}min`) : '—'}
               {' · '}Eff {d.Sleep_Efficiency !== null ? `${d.Sleep_Efficiency}%` : '—'}
             </p>
           </MetricCard>

@@ -12,6 +12,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Health Dashboard — Cold Labs',
   description: 'Personal health tracking: Oura Ring + MacroFactor + AI insights',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/favicon.png',
+  },
 };
 
 export const viewport: Viewport = {
