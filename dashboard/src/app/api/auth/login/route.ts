@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
-
-/** Simple session token: SHA-256 hash of password + secret salt */
-function makeSessionToken(password: string): string {
-  const salt = process.env.DASHBOARD_PASSWORD || 'fallback';
-  return crypto.createHash('sha256').update(`${password}:${salt}:health-session`).digest('hex');
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,11 +22,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Wrong password' }, { status: 401 });
     }
 
-    // Password correct — set session cookie
-    const token = makeSessionToken(password);
-
+    // Password correct — set session cookie with a simple static token
     const cookieStore = await cookies();
-    cookieStore.set('health_session', token, {
+    cookieStore.set('health_session', 'authenticated', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
