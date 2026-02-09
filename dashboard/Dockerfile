@@ -4,6 +4,7 @@
 # Environment variables needed at RUNTIME (set in Railway):
 #   GOOGLE_SHEET_ID
 #   GOOGLE_SERVICE_ACCOUNT_JSON
+#   DASHBOARD_PASSWORD
 
 FROM node:20-alpine AS base
 

@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.1] — 2026-02-09
+### Added — Dashboard Password Protection
+
+- **Login page** — `dashboard/src/app/login/page.tsx`
+  - Dark-themed (#061A19 background, #08DEDE accent), auto-focus input, "Wrong password" error
+  - Minimal design matching Cold Labs brand
+
+- **Auth API routes**
+  - `POST /api/auth/login` — Validates password against `DASHBOARD_PASSWORD` env var, sets HTTP-only secure cookie (`health_session`) with 30-day expiry
+  - `GET|POST /api/auth/logout` — Clears session cookie, redirects to `/login`
+
+- **Middleware** — `dashboard/src/middleware.ts`
+  - Runs on every request, checks for valid `health_session` cookie
+  - Redirects to `/login` if missing or invalid
+  - Exempt paths: `/login`, `/api/auth`, `/_next`, `/favicon.ico`, `/logo.png`
+
+- **NavBar logout** — Added "🔒 Lock" button to NavBar that calls `/api/auth/logout`
+  - NavBar auto-hides on login page
+
+### Files Added
+- `dashboard/src/app/login/page.tsx`
+- `dashboard/src/app/api/auth/login/route.ts`
+- `dashboard/src/app/api/auth/logout/route.ts`
+- `dashboard/src/middleware.ts`
+- `dashboard/.env.local` (not committed — contains DASHBOARD_PASSWORD)
+
+### Files Modified
+- `dashboard/src/components/NavBar.tsx` — Added logout button, hide on /login
+- `dashboard/Dockerfile` — Documented DASHBOARD_PASSWORD env var
+- `.env.example` — Added DASHBOARD_PASSWORD placeholder
+- `railway.toml` — Added DASHBOARD_PASSWORD to dashboard env vars
+- `PROJECT_SCOPE.md` — Added Section 7.5 Authentication
+- `CHANGELOG.md`
+
+---
+
 ## [0.5.0] — 2026-02-09
 ### Added — Phase 5: Deploy to Railway
 

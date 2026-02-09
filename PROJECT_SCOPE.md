@@ -339,6 +339,16 @@ Previous week summary:
 - Latest AI summary displayed
 - Historical summaries browsable by week
 
+### 7.5 Authentication
+- Single-password gate via `DASHBOARD_PASSWORD` environment variable
+- Login page at `/login` — dark-themed, minimal, auto-focus input
+- Server-side password validation at `/api/auth/login` (POST)
+- HTTP-only secure cookie (`health_session`) with 30-day expiry
+- Next.js middleware checks cookie on every request; redirects to `/login` if invalid
+- Exempt paths: `/login`, `/api/auth`, `/_next`, `/favicon.ico`
+- Logout via NavBar "🔒" button → clears cookie → redirects to `/login`
+- No database, no user management — just one password in an env var
+
 ### Mobile-First
 The dashboard must be fully responsive and optimized for phone viewing. Cards should stack vertically on mobile.
 

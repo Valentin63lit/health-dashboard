@@ -31,3 +31,4 @@
 # ─── Dashboard Environment Variables ─────────────────────────
 # GOOGLE_SHEET_ID          — Same Google Sheet ID
 # GOOGLE_SERVICE_ACCOUNT_JSON — Same service account JSON
+# DASHBOARD_PASSWORD       — Password gate for the dashboard
